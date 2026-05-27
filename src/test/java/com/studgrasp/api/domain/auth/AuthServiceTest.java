@@ -1,0 +1,99 @@
+package com.studgrasp.api.domain.auth;
+
+import com.studgrasp.api.domain.user.User;
+import com.studgrasp.api.domain.user.UserRepository;
+import com.studgrasp.api.domain.user.UserRole;
+import com.studgrasp.api.infra.security.JwtService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+
+    @Mock private UserRepository userRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private JwtService jwtService;
+    @Mock private AuthenticationManager authenticationManager;
+
+    @InjectMocks
+    private AuthService authService;
+
+    @Test
+    @DisplayName("deve registrar novo usuário com sucesso")
+    void shouldRegisterNewUser() {
+        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
+
+        when(userRepository.existsByEmail("vitor@test.com")).thenReturn(false);
+        when(passwordEncoder.encode("123456")).thenReturn("hashed");
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(jwtService.generateToken(any(User.class))).thenReturn("token-mock");
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.token()).isEqualTo("token-mock");
+        assertThat(response.email()).isEqualTo("vitor@test.com");
+        assertThat(response.role()).isEqualTo("STUDENT");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção ao registrar email duplicado")
+    void shouldThrowWhenEmailAlreadyExists() {
+        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
+
+        when(userRepository.existsByEmail("vitor@test.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Email já cadastrado");
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("deve fazer login com sucesso")
+    void shouldLoginSuccessfully() {
+        var request = new LoginRequest("vitor@test.com", "123456");
+        var user = User.builder()
+                .name("Vitor")
+                .email("vitor@test.com")
+                .passwordHash("hashed")
+                .role(UserRole.STUDENT)
+                .build();
+
+        when(userRepository.findByEmail("vitor@test.com")).thenReturn(Optional.of(user));
+        when(jwtService.generateToken(user)).thenReturn("token-mock");
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.token()).isEqualTo("token-mock");
+        assertThat(response.email()).isEqualTo("vitor@test.com");
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção com credenciais inválidas")
+    void shouldThrowOnInvalidCredentials() {
+        var request = new LoginRequest("vitor@test.com", "senhaerrada");
+
+        doThrow(new BadCredentialsException("Bad credentials"))
+                .when(authenticationManager).authenticate(any());
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+}
