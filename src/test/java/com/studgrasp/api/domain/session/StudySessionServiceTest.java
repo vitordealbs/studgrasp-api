@@ -6,7 +6,7 @@ import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -81,12 +81,12 @@ class StudySessionServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenSessionDoesNotExistOnEnd() {
+    void shouldThrowResourceNotFoundExceptionWhenSessionDoesNotExistOnEnd() {
         UUID sessionId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> studySessionService.endSession(sessionId, now));
+        assertThrows(ResourceNotFoundException.class, () -> studySessionService.endSession(sessionId, now));
     }
 }

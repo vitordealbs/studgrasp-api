@@ -1,7 +1,7 @@
 package com.studgrasp.api.domain.roadmap;
 
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -57,10 +57,10 @@ class RoadmapServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenRoadmapDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenRoadmapDoesNotExist() {
         UUID id = UUID.randomUUID();
         when(roadmapRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> roadmapService.getRoadmapWithNodes(id));
+        assertThrows(ResourceNotFoundException.class, () -> roadmapService.getRoadmapWithNodes(id));
     }
 }
