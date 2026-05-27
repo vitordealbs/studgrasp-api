@@ -6,7 +6,7 @@ import com.studgrasp.api.domain.roadmap.RoadmapNode;
 import com.studgrasp.api.domain.roadmap.RoadmapNodeRepository;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -85,17 +85,17 @@ class UserProgressServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenUserDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenUserDoesNotExist() {
         UUID userId = UUID.randomUUID();
         UserProgressRequestDTO request = new UserProgressRequestDTO(UUID.randomUUID(), "DONE");
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> userProgressService.updateProgress(userId, request));
+        assertThrows(ResourceNotFoundException.class, () -> userProgressService.updateProgress(userId, request));
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenRoadmapNodeDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenRoadmapNodeDoesNotExist() {
         UUID userId = UUID.randomUUID();
         UUID nodeId = UUID.randomUUID();
         UserProgressRequestDTO request = new UserProgressRequestDTO(nodeId, "DONE");
@@ -103,6 +103,6 @@ class UserProgressServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(new User()));
         when(roadmapNodeRepository.findById(nodeId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> userProgressService.updateProgress(userId, request));
+        assertThrows(ResourceNotFoundException.class, () -> userProgressService.updateProgress(userId, request));
     }
 }

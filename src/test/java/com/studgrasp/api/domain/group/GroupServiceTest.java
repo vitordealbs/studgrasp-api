@@ -5,7 +5,7 @@ import com.studgrasp.api.domain.classroom.ClassroomRepository;
 import com.studgrasp.api.domain.group.dto.*;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -62,13 +62,13 @@ class GroupServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenClassroomDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenClassroomDoesNotExist() {
         UUID classroomId = UUID.randomUUID();
         GroupRequestDTO requestDTO = new GroupRequestDTO("Ghost Group", classroomId);
 
         when(classroomRepository.findById(classroomId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> groupService.createGroup(requestDTO));
+        assertThrows(ResourceNotFoundException.class, () -> groupService.createGroup(requestDTO));
 
         verify(classroomRepository, times(1)).findById(classroomId);
         verify(groupRepository, never()).save(any(Group.class));
@@ -111,13 +111,13 @@ class GroupServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenGroupDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenGroupDoesNotExist() {
         UUID groupId = UUID.randomUUID();
         MessageRequestDTO requestDTO = new MessageRequestDTO("Lost message", UUID.randomUUID());
 
         when(groupRepository.findById(groupId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
+        assertThrows(ResourceNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
 
         verify(groupRepository, times(1)).findById(groupId);
         verify(userRepository, never()).findById(any());
@@ -125,7 +125,7 @@ class GroupServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenUserDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenUserDoesNotExist() {
         UUID groupId = UUID.randomUUID();
         UUID senderId = UUID.randomUUID();
         MessageRequestDTO requestDTO = new MessageRequestDTO("Message from a ghost", senderId);
@@ -135,7 +135,7 @@ class GroupServiceTest {
         when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(userRepository.findById(senderId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
+        assertThrows(ResourceNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
 
         verify(groupRepository, times(1)).findById(groupId);
         verify(userRepository, times(1)).findById(senderId);

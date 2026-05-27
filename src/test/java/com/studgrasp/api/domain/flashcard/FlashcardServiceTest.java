@@ -3,7 +3,7 @@ package com.studgrasp.api.domain.flashcard;
 import com.studgrasp.api.domain.flashcard.dto.*;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -86,13 +86,13 @@ class FlashcardServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenFlashcardDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenFlashcardDoesNotExist() {
         UUID flashcardId = UUID.randomUUID();
         FlashcardAttemptRequestDTO request = new FlashcardAttemptRequestDTO(UUID.randomUUID(), true);
 
         when(flashcardRepository.findById(flashcardId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> flashcardService.totalAttempt(flashcardId, request));
+        assertThrows(ResourceNotFoundException.class, () -> flashcardService.totalAttempt(flashcardId, request));
 
         verify(flashcardRepository, times(1)).findById(flashcardId);
         verify(userRepository, never()).findById(any());
@@ -100,7 +100,7 @@ class FlashcardServiceTest {
     }
 
     @Test
-    void shouldThrowEntityNotFoundExceptionWhenUserDoesNotExist() {
+    void shouldThrowResourceNotFoundExceptionWhenUserDoesNotExist() {
         UUID flashcardId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         FlashcardAttemptRequestDTO request = new FlashcardAttemptRequestDTO(userId, true);
@@ -109,7 +109,7 @@ class FlashcardServiceTest {
         when(flashcardRepository.findById(flashcardId)).thenReturn(Optional.of(flashcard));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> flashcardService.totalAttempt(flashcardId, request));
+        assertThrows(ResourceNotFoundException.class, () -> flashcardService.totalAttempt(flashcardId, request));
 
         verify(flashcardRepository, times(1)).findById(flashcardId);
         verify(userRepository, times(1)).findById(userId);
