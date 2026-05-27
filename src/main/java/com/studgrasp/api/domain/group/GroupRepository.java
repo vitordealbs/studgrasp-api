@@ -8,5 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, UUID> {
-    List<String> findByClassroomId(UUID classroomId);
+    List<Group> findByClassroomId(UUID classroomId);
 }
