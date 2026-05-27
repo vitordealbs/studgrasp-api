@@ -2,18 +2,23 @@ package com.studgrasp.api.domain.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank(message = "Nome é obrigatório")
+        @NotBlank(message = "You must write your Name")
         String name,
 
-        @NotBlank(message = "Email é obrigatório")
-        @Email(message = "Email inválido")
+        @NotBlank(message = "You must write your E-mail")
+        @Email(message = "Invalid e-mail")
         String email,
 
-        @NotBlank(message = "Senha é obrigatória")
-        @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")
+        @NotBlank(message = "You must write your Password")
+        @Size(min = 12, message = "Password must be at least 12 characters")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#^()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?])[A-Za-z\\d@$!%*?&#+\\-=\\[\\]{};':\"\\\\|,.<>\\/?^()_]{12,}$",
+                message = "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character"
+        )
         String password,
 
         String role
