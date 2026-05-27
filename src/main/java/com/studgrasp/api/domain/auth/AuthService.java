@@ -21,7 +21,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email já cadastrado");
+            throw new IllegalArgumentException("Email already registered");
         }
 
         var user = User.builder()

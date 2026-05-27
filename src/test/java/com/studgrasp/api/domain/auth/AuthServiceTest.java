@@ -4,7 +4,6 @@ import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.domain.user.UserRole;
 import com.studgrasp.api.infra.security.JwtService;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,7 +32,6 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    @DisplayName("deve registrar novo usuário com sucesso")
     void shouldRegisterNewUser() {
         var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
 
@@ -51,7 +49,6 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("deve lançar exceção ao registrar email duplicado")
     void shouldThrowWhenEmailAlreadyExists() {
         var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
 
@@ -59,13 +56,12 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Email já cadastrado");
+                .hasMessage("Email already registered");
 
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("deve fazer login com sucesso")
     void shouldLoginSuccessfully() {
         var request = new LoginRequest("vitor@test.com", "123456");
         var user = User.builder()
@@ -86,9 +82,8 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("deve lançar exceção com credenciais inválidas")
     void shouldThrowOnInvalidCredentials() {
-        var request = new LoginRequest("vitor@test.com", "senhaerrada");
+        var request = new LoginRequest("vitor@test.com", "wrongpassword");
 
         doThrow(new BadCredentialsException("Bad credentials"))
                 .when(authenticationManager).authenticate(any());
