@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
             fields.put(field, message);
         });
         return ResponseEntity.badRequest().body(
-                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Erro de validação", fields)
+                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation Error", fields)
         );
     }
 
@@ -40,14 +40,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Email ou senha inválidos", null)
+                new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "E-mail or Password invalid", null)
         );
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Acesso negado", null)
+                new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access Denied", null)
         );
     }
 
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "Erro interno do servidor", null)
+                        "Server Intern Error", null)
         );
     }
 
@@ -70,10 +70,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrity(
             org.springframework.dao.DataIntegrityViolationException ex) {
 
-        String message = "Operação violou restrição de integridade";
+        String message = "Operation violated the server integrity";
 
         if (ex.getMessage() != null && ex.getMessage().contains("users_email_key")) {
-            message = "Email já cadastrado";
+            message = "E-mail already registered";
         }
 
         return ResponseEntity.badRequest().body(
