@@ -3,7 +3,7 @@ package com.studgrasp.api.domain.group;
 import com.studgrasp.api.domain.classroom.ClassroomRepository;
 import com.studgrasp.api.domain.group.dto.*;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +22,7 @@ public class GroupService {
     @Transactional
     public GroupResponseDTO createGroup(GroupRequestDTO dto) {
         var classroom = classroomRepository.findById(dto.classroomId())
-                .orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
 
         var group = Group.builder()
                 .name(dto.name())
@@ -36,10 +36,10 @@ public class GroupService {
     @Transactional
     public MessageResponseDTO sendMessage(UUID groupId, MessageRequestDTO dto) {
         var group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new EntityNotFoundException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         var sender = userRepository.findById(dto.senderId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         var message = Message.builder()
                 .group(group)
