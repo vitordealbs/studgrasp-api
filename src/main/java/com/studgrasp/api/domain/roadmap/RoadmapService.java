@@ -2,7 +2,7 @@ package com.studgrasp.api.domain.roadmap;
 
 import com.studgrasp.api.domain.roadmap.dto.RoadmapNodeResponseDTO;
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class RoadmapService {
     @Transactional(readOnly = true)
     public RoadmapResponseDTO getRoadmapWithNodes(UUID roadmapId) {
         var roadmap = roadmapRepository.findById(roadmapId)
-                .orElseThrow(() -> new EntityNotFoundException("Roadmap not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Roadmap not found"));
 
         var nodes = roadmapNodeRepository.findByRoadmapIdOrderByNodeOrderAsc(roadmapId).stream()
                 .map(node -> new RoadmapNodeResponseDTO(

@@ -4,7 +4,7 @@ import com.studgrasp.api.domain.roadmap.RoadmapNodeRepository;
 import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +24,10 @@ public class StudySessionService {
     @Transactional
     public StudySessionResponseDTO startSession(UUID userId, StudySessionRequestDTO dto) {
         var user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         var node = roadmapNodeRepository.findById(dto.nodeId())
-                .orElseThrow(() -> new EntityNotFoundException("Roadmap node not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Roadmap node not found"));
 
         var session = StudySession.builder()
                 .user(user)
@@ -50,7 +50,7 @@ public class StudySessionService {
     @Transactional
     public StudySessionResponseDTO endSession(UUID sessionId, LocalDateTime endedAt) {
         var session = studySessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Study session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Study session not found"));
 
         session.setEndedAt(endedAt);
 

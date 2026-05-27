@@ -2,7 +2,7 @@ package com.studgrasp.api.domain.flashcard;
 
 import com.studgrasp.api.domain.flashcard.dto.*;
 import com.studgrasp.api.domain.user.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,10 +39,10 @@ public class FlashcardService {
     @Transactional
     public FlashcardAttemptResponseDTO totalAttempt(UUID flashcardId, FlashcardAttemptRequestDTO dto) {
         var flashcard = flashcardRepository.findById(flashcardId)
-                .orElseThrow(() -> new EntityNotFoundException("Flashcard not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found"));
 
         var user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         var nextReview = dto.correct() ? LocalDateTime.now().plusDays(3) : LocalDateTime.now().plusDays(1);
 
