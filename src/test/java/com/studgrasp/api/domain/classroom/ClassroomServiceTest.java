@@ -1,5 +1,7 @@
 package com.studgrasp.api.domain.classroom;
 
+import com.studgrasp.api.domain.classmember.ClassMember;
+import com.studgrasp.api.domain.classmember.ClassMemberRepository;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRole;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
@@ -111,19 +113,18 @@ class ClassroomServiceTest {
 
     @Test
     void shouldListMyClassrooms() {
-        var memberEntry = ClassMember.builder()
-                .classroom(classroom)
-                .user(student)
-                .build();
-
-        when(classroomRepository.findByAdvisorId(student.getId())).thenReturn(List.of());
-        when(classMemberRepository.findByUserId(student.getId())).thenReturn(List.of(memberEntry));
-        when(classMemberRepository.findByClassroomId(classroom.getId())).thenReturn(List.of(memberEntry));
+        when(classroomRepository.findAllAccessibleByUserId(student.getId()))
+                .thenReturn(List.of(classroom));
+        List<Object[]> counts = new java.util.ArrayList<>();
+        counts.add(new Object[]{classroom.getId(), 2L});
+        when(classMemberRepository.countMembersGroupByClassroomId(List.of(classroom.getId())))
+                .thenReturn(counts);
 
         List<ClassroomResponse> result = classroomService.listMyClassrooms(student);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).name()).isEqualTo("Software Engineering");
+        assertThat(result.get(0).memberCount()).isEqualTo(2);
     }
 
     @Test

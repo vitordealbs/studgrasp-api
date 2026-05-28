@@ -1,29 +1,48 @@
 package com.studgrasp.api.domain.roadmap;
 
+import com.studgrasp.api.domain.roadmap.dto.RoadmapRequestDTO;
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/roadmaps")
+@RequestMapping("/api/v1/roadmaps")
 @RequiredArgsConstructor
 public class RoadmapController {
 
     private final RoadmapService roadmapService;
 
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADVISOR', 'SCRAPER')")
+    public ResponseEntity<RoadmapResponseDTO> create(
+            @RequestBody @Valid RoadmapRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(roadmapService.create(request));
+    }
+
     @GetMapping
-    public ResponseEntity<List<RoadmapResponseDTO>> getAll() {
-        var response = roadmapService.getAllRoadmaps();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Page<RoadmapResponseDTO>> getAll(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(roadmapService.getAllRoadmaps(pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RoadmapResponseDTO> getById(@PathVariable UUID id) {
-        var response = roadmapService.getRoadmapWithNodes(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(roadmapService.getRoadmapWithNodes(id));
+    }
+
+    @GetMapping("/career/{careerType}")
+    public ResponseEntity<RoadmapResponseDTO> getByCareerType(
+            @PathVariable String careerType) {
+        return ResponseEntity.ok(roadmapService.getByCareerType(careerType));
     }
 }

@@ -1,5 +1,6 @@
-package com.studgrasp.api.domain.classroom;
+package com.studgrasp.api.domain.classmember;
 
+import com.studgrasp.api.domain.classroom.Classroom;
 import com.studgrasp.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
