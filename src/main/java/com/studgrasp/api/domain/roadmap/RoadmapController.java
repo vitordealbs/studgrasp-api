@@ -4,21 +4,25 @@ import com.studgrasp.api.domain.roadmap.dto.RoadmapRequestDTO;
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/roadmaps")
+@RequestMapping("/api/v1/roadmaps")
 @RequiredArgsConstructor
 public class RoadmapController {
 
     private final RoadmapService roadmapService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADVISOR', 'SCRAPER')")
     public ResponseEntity<RoadmapResponseDTO> create(
             @RequestBody @Valid RoadmapRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -26,8 +30,9 @@ public class RoadmapController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RoadmapResponseDTO>> getAll() {
-        return ResponseEntity.ok(roadmapService.getAllRoadmaps());
+    public ResponseEntity<Page<RoadmapResponseDTO>> getAll(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(roadmapService.getAllRoadmaps(pageable));
     }
 
     @GetMapping("/{id}")

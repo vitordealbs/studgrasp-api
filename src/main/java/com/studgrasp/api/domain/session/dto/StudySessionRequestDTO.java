@@ -6,7 +6,5 @@ import java.util.UUID;
 
 public record StudySessionRequestDTO(
         @NotNull UUID nodeId,
-        @NotNull LocalDateTime startedAt,
-        LocalDateTime endedAt,
-        Integer durationS
+        @NotNull LocalDateTime startedAt
 ) {}

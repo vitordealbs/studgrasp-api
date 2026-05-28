@@ -36,7 +36,7 @@ class AuthControllerIntegrationTest {
     @Test
     void shouldRegisterAndReturnToken() throws Exception {
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
@@ -54,7 +54,7 @@ class AuthControllerIntegrationTest {
     }
     @Test
     void shouldReturn400OnInvalidBody() throws Exception {
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -64,7 +64,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void shouldReturn401OnBadCredentials() throws Exception {
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

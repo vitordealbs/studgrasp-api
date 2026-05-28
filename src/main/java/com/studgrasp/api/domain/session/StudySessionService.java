@@ -1,9 +1,9 @@
 package com.studgrasp.api.domain.session;
 
-import com.studgrasp.api.domain.roadmap.RoadmapNodeRepository;
+import com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository;
 import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
-import com.studgrasp.api.domain.user.UserRepository;
+import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,14 +18,10 @@ import java.util.UUID;
 public class StudySessionService {
 
     private final StudySessionRepository studySessionRepository;
-    private final UserRepository userRepository;
     private final RoadmapNodeRepository roadmapNodeRepository;
 
     @Transactional
-    public StudySessionResponseDTO startSession(UUID userId, StudySessionRequestDTO dto) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
+    public StudySessionResponseDTO startSession(User user, StudySessionRequestDTO dto) {
         var node = roadmapNodeRepository.findById(dto.nodeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Roadmap node not found"));
 
@@ -48,14 +44,17 @@ public class StudySessionService {
     }
 
     @Transactional
-    public StudySessionResponseDTO endSession(UUID sessionId, LocalDateTime endedAt) {
+    public StudySessionResponseDTO endSession(UUID sessionId, User user, LocalDateTime endedAt) {
         var session = studySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Study session not found"));
 
-        session.setEndedAt(endedAt);
+        if (!session.getUser().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You cannot end another user's session");
+        }
 
-        long seconds = Duration.between(session.getStartedAt(), endedAt).toSeconds();
-        session.setDurationS((int) seconds);
+        session.setEndedAt(endedAt);
+        session.setDurationS((int) Duration.between(session.getStartedAt(), endedAt).toSeconds());
 
         var saved = studySessionRepository.save(session);
 

@@ -1,5 +1,7 @@
 package com.studgrasp.api.domain.classroom;
 
+import com.studgrasp.api.domain.classmember.ClassMember;
+import com.studgrasp.api.domain.classmember.ClassMemberRepository;
 import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -8,11 +10,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ClassroomService {
+
+    private static final int INVITE_CODE_LENGTH = 8;
 
     private final ClassroomRepository classroomRepository;
     private final ClassMemberRepository classMemberRepository;
@@ -51,19 +57,23 @@ public class ClassroomService {
     }
 
     public List<ClassroomResponse> listMyClassrooms(User user) {
-        var asAdvisor = classroomRepository.findByAdvisorId(user.getId())
-                .stream().map(c -> {
-                    int count = classMemberRepository.findByClassroomId(c.getId()).size();
-                    return toResponse(c, count);
-                }).toList();
+        List<Classroom> classrooms = classroomRepository.findAllAccessibleByUserId(user.getId());
+        if (classrooms.isEmpty()) {
+            return List.of();
+        }
 
-        var asMember = classMemberRepository.findByUserId(user.getId())
-                .stream().map(m -> {
-                    int count = classMemberRepository.findByClassroomId(m.getClassroom().getId()).size();
-                    return toResponse(m.getClassroom(), count);
-                }).toList();
+        List<UUID> ids = classrooms.stream().map(Classroom::getId).toList();
+        Map<UUID, Long> countByClassroom = classMemberRepository
+                .countMembersGroupByClassroomId(ids)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
 
-        return java.util.stream.Stream.concat(asAdvisor.stream(), asMember.stream()).toList();
+        return classrooms.stream()
+                .map(c -> toResponse(c, countByClassroom.getOrDefault(c.getId(), 0L).intValue()))
+                .toList();
     }
 
     public ClassroomResponse getById(UUID id, User user) {
@@ -84,7 +94,10 @@ public class ClassroomService {
     private String generateInviteCode() {
         String code;
         do {
-            code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            code = UUID.randomUUID().toString()
+                    .replace("-", "")
+                    .substring(0, INVITE_CODE_LENGTH)
+                    .toUpperCase();
         } while (classroomRepository.existsByInviteCode(code));
         return code;
     }

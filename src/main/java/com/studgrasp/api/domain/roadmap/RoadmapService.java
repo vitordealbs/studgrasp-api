@@ -1,10 +1,13 @@
 package com.studgrasp.api.domain.roadmap;
 
-import com.studgrasp.api.domain.roadmap.dto.RoadmapNodeResponseDTO;
+import com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository;
+import com.studgrasp.api.domain.roadmapnode.dto.RoadmapNodeResponseDTO;
 import com.studgrasp.api.domain.roadmap.dto.RoadmapRequestDTO;
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +34,9 @@ public class RoadmapService {
     }
 
     @Transactional(readOnly = true)
-    public List<RoadmapResponseDTO> getAllRoadmaps() {
-        return roadmapRepository.findAll().stream()
-                .map(roadmap -> toResponse(roadmap, List.of()))
-                .toList();
+    public Page<RoadmapResponseDTO> getAllRoadmaps(Pageable pageable) {
+        return roadmapRepository.findAll(pageable)
+                .map(roadmap -> toResponse(roadmap, List.of()));
     }
 
     @Transactional(readOnly = true)
@@ -42,8 +44,7 @@ public class RoadmapService {
         var roadmap = roadmapRepository.findById(roadmapId)
                 .orElseThrow(() -> new ResourceNotFoundException("Roadmap not found"));
 
-        var nodes = buildNodes(roadmapId);
-        return toResponse(roadmap, nodes);
+        return toResponse(roadmap, buildNodes(roadmapId));
     }
 
     @Transactional(readOnly = true)
@@ -52,8 +53,7 @@ public class RoadmapService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Roadmap not found for career: " + careerType));
 
-        var nodes = buildNodes(roadmap.getId());
-        return toResponse(roadmap, nodes);
+        return toResponse(roadmap, buildNodes(roadmap.getId()));
     }
 
     private List<RoadmapNodeResponseDTO> buildNodes(UUID roadmapId) {
@@ -61,11 +61,12 @@ public class RoadmapService {
                 .stream()
                 .map(node -> new RoadmapNodeResponseDTO(
                         node.getId(),
-                        node.getParentId(),
                         node.getTitle(),
                         node.getDescription(),
+                        node.getParentId(),
+                        node.getNodeType(),
                         node.getNodeOrder(),
-                        node.getNodeType()
+                        node.getRoadmap().getId()
                 )).toList();
     }
 

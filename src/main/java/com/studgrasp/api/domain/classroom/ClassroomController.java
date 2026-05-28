@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.studgrasp.api.domain.user.User;
@@ -12,13 +13,14 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/classrooms")
+@RequestMapping("/api/v1/classrooms")
 @RequiredArgsConstructor
 public class ClassroomController {
 
     private final ClassroomService classroomService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADVISOR')")
     public ResponseEntity<ClassroomResponse> create(
             @RequestBody @Valid ClassroomRequest request,
             @AuthenticationPrincipal User user) {

@@ -2,7 +2,7 @@ package com.studgrasp.api.domain.group;
 
 import com.studgrasp.api.domain.classroom.ClassroomRepository;
 import com.studgrasp.api.domain.group.dto.*;
-import com.studgrasp.api.domain.user.UserRepository;
+import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,6 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final MessageRepository messageRepository;
     private final ClassroomRepository classroomRepository;
-    private final UserRepository userRepository;
 
     @Transactional
     public GroupResponseDTO createGroup(GroupRequestDTO dto) {
@@ -34,12 +33,9 @@ public class GroupService {
     }
 
     @Transactional
-    public MessageResponseDTO sendMessage(UUID groupId, MessageRequestDTO dto) {
+    public MessageResponseDTO sendMessage(UUID groupId, User sender, MessageRequestDTO dto) {
         var group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-
-        var sender = userRepository.findById(dto.senderId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         var message = Message.builder()
                 .group(group)
