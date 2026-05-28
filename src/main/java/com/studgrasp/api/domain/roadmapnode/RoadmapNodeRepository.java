@@ -1,5 +1,6 @@
-package com.studgrasp.api.domain.roadmap;
+package com.studgrasp.api.domain.roadmapnode;
 
+import com.studgrasp.api.domain.roadmap.RoadmapNode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

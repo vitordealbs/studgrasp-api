@@ -1,4 +1,4 @@
-package com.studgrasp.api.domain.classroom;
+package com.studgrasp.api.domain.classmember;
 
 import java.io.Serializable;
 import java.util.UUID;

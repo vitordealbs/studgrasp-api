@@ -1,11 +1,10 @@
 package com.studgrasp.api.domain.session;
 
 import com.studgrasp.api.domain.roadmap.RoadmapNode;
-import com.studgrasp.api.domain.roadmap.RoadmapNodeRepository;
+import com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository;
 import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
 import com.studgrasp.api.domain.user.User;
-import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,9 +30,6 @@ class StudySessionServiceTest {
     private StudySessionRepository studySessionRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
     private RoadmapNodeRepository roadmapNodeRepository;
 
     @Test
@@ -42,17 +38,16 @@ class StudySessionServiceTest {
         UUID nodeId = UUID.randomUUID();
         UUID sessionId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
-        StudySessionRequestDTO request = new StudySessionRequestDTO(nodeId, now, null, null);
+        StudySessionRequestDTO request = new StudySessionRequestDTO(nodeId, now);
 
         User user = User.builder().id(userId).build();
         RoadmapNode node = RoadmapNode.builder().id(nodeId).build();
         StudySession saved = StudySession.builder().id(sessionId).user(user).roadmapNode(node).startedAt(now).build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(roadmapNodeRepository.findById(nodeId)).thenReturn(Optional.of(node));
         when(studySessionRepository.save(any(StudySession.class))).thenReturn(saved);
 
-        StudySessionResponseDTO response = studySessionService.startSession(userId, request);
+        StudySessionResponseDTO response = studySessionService.startSession(user, request);
 
         assertNotNull(response);
         assertEquals(sessionId, response.id());
@@ -71,9 +66,9 @@ class StudySessionServiceTest {
         StudySession existing = StudySession.builder().id(sessionId).user(user).roadmapNode(node).startedAt(start).build();
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(existing));
-        when(studySessionRepository.save(any(StudySession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(studySessionRepository.save(any(StudySession.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        StudySessionResponseDTO response = studySessionService.endSession(sessionId, end);
+        StudySessionResponseDTO response = studySessionService.endSession(sessionId, user, end);
 
         assertNotNull(response);
         assertEquals(end, response.endedAt());
@@ -83,10 +78,11 @@ class StudySessionServiceTest {
     @Test
     void shouldThrowResourceNotFoundExceptionWhenSessionDoesNotExistOnEnd() {
         UUID sessionId = UUID.randomUUID();
-        LocalDateTime now = LocalDateTime.now();
+        User user = User.builder().id(UUID.randomUUID()).build();
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> studySessionService.endSession(sessionId, now));
+        assertThrows(ResourceNotFoundException.class,
+                () -> studySessionService.endSession(sessionId, user, LocalDateTime.now()));
     }
 }

@@ -1,12 +1,13 @@
-package com.studgrasp.api.domain.roadmap.dto;
+package com.studgrasp.api.domain.roadmapnode.dto;
 
 import java.util.UUID;
 
 public record RoadmapNodeResponseDTO(
         UUID id,
-        UUID parentId,
         String title,
         String description,
+        UUID parentId,
+        String nodeType,
         Integer nodeOrder,
-        String nodeType
+        UUID roadmapId
 ) {}
