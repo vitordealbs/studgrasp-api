@@ -2,35 +2,38 @@ package com.studgrasp.api.domain.session;
 
 import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
+import com.studgrasp.api.domain.user.User;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/study-sessions")
+@RequestMapping("/api/v1/study-sessions")
 @RequiredArgsConstructor
 public class StudySessionController {
 
     private final StudySessionService studySessionService;
 
-    @PostMapping("/users/{userId}")
+    @PostMapping
     public ResponseEntity<StudySessionResponseDTO> startSession(
-            @PathVariable UUID userId,
+            @AuthenticationPrincipal User user,
             @RequestBody @Valid StudySessionRequestDTO dto) {
-        var response = studySessionService.startSession(userId, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(studySessionService.startSession(user, dto));
     }
 
     @PatchMapping("/{sessionId}/end")
     public ResponseEntity<StudySessionResponseDTO> endSession(
             @PathVariable UUID sessionId,
-            @RequestParam LocalDateTime endedAt) {
-        var response = studySessionService.endSession(sessionId, endedAt);
-        return ResponseEntity.ok(response);
+            @AuthenticationPrincipal User user,
+            @RequestParam @NotNull LocalDateTime endedAt) {
+        return ResponseEntity.ok(studySessionService.endSession(sessionId, user, endedAt));
     }
 }

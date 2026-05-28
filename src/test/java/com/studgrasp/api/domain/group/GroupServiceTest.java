@@ -4,7 +4,6 @@ import com.studgrasp.api.domain.classroom.Classroom;
 import com.studgrasp.api.domain.classroom.ClassroomRepository;
 import com.studgrasp.api.domain.group.dto.*;
 import com.studgrasp.api.domain.user.User;
-import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,9 +34,6 @@ class GroupServiceTest {
     @Mock
     private ClassroomRepository classroomRepository;
 
-    @Mock
-    private UserRepository userRepository;
-
     @Test
     void shouldCreateGroupWhenClassroomExists() {
         UUID classroomId = UUID.randomUUID();
@@ -56,7 +52,6 @@ class GroupServiceTest {
         assertEquals(groupId, response.id());
         assertEquals("Backend Study Group", response.name());
         assertEquals(classroomId, response.classroomId());
-
         verify(classroomRepository, times(1)).findById(classroomId);
         verify(groupRepository, times(1)).save(any(Group.class));
     }
@@ -69,33 +64,30 @@ class GroupServiceTest {
         when(classroomRepository.findById(classroomId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> groupService.createGroup(requestDTO));
-
-        verify(classroomRepository, times(1)).findById(classroomId);
         verify(groupRepository, never()).save(any(Group.class));
     }
 
     @Test
-    void shouldSendMessageWhenGroupAndUserExist() {
+    void shouldSendMessageWhenGroupExists() {
         UUID groupId = UUID.randomUUID();
         UUID senderId = UUID.randomUUID();
-        MessageRequestDTO requestDTO = new MessageRequestDTO("Hello everyone, testing the chat!", senderId);
+        MessageRequestDTO requestDTO = new MessageRequestDTO("Hello everyone, testing the chat!");
 
         Group group = Group.builder().id(groupId).name("AI Group").build();
         User sender = User.builder().id(senderId).name("Vitor Albano").build();
 
         when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
-        when(userRepository.findById(senderId)).thenReturn(Optional.of(sender));
 
         UUID messageId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
-        when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
-            Message msg = invocation.getArgument(0);
+        when(messageRepository.save(any(Message.class))).thenAnswer(inv -> {
+            Message msg = inv.getArgument(0);
             msg.setId(messageId);
             msg.setCreatedAt(now);
             return msg;
         });
 
-        MessageResponseDTO response = groupService.sendMessage(groupId, requestDTO);
+        MessageResponseDTO response = groupService.sendMessage(groupId, sender, requestDTO);
 
         assertNotNull(response);
         assertEquals(messageId, response.id());
@@ -104,41 +96,20 @@ class GroupServiceTest {
         assertEquals("Vitor Albano", response.senderName());
         assertEquals(requestDTO.content(), response.content());
         assertEquals(now, response.createdAt());
-
         verify(groupRepository, times(1)).findById(groupId);
-        verify(userRepository, times(1)).findById(senderId);
         verify(messageRepository, times(1)).save(any(Message.class));
     }
 
     @Test
     void shouldThrowResourceNotFoundExceptionWhenGroupDoesNotExist() {
         UUID groupId = UUID.randomUUID();
-        MessageRequestDTO requestDTO = new MessageRequestDTO("Lost message", UUID.randomUUID());
+        MessageRequestDTO requestDTO = new MessageRequestDTO("Lost message");
+        User sender = User.builder().id(UUID.randomUUID()).build();
 
         when(groupRepository.findById(groupId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
-
-        verify(groupRepository, times(1)).findById(groupId);
-        verify(userRepository, never()).findById(any());
-        verify(messageRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldThrowResourceNotFoundExceptionWhenUserDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
-        UUID senderId = UUID.randomUUID();
-        MessageRequestDTO requestDTO = new MessageRequestDTO("Message from a ghost", senderId);
-
-        Group group = Group.builder().id(groupId).name("General Group").build();
-
-        when(groupRepository.findById(groupId)).thenReturn(Optional.of(group));
-        when(userRepository.findById(senderId)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> groupService.sendMessage(groupId, requestDTO));
-
-        verify(groupRepository, times(1)).findById(groupId);
-        verify(userRepository, times(1)).findById(senderId);
+        assertThrows(ResourceNotFoundException.class,
+                () -> groupService.sendMessage(groupId, sender, requestDTO));
         verify(messageRepository, never()).save(any());
     }
 }

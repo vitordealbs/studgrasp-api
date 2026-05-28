@@ -2,32 +2,26 @@ package com.studgrasp.api.domain.progress;
 
 import com.studgrasp.api.domain.progress.dto.UserProgressRequestDTO;
 import com.studgrasp.api.domain.progress.dto.UserProgressResponseDTO;
-import com.studgrasp.api.domain.roadmap.RoadmapNodeRepository;
-import com.studgrasp.api.domain.user.UserRepository;
+import com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository;
+import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserProgressService {
 
     private final UserProgressRepository userProgressRepository;
-    private final UserRepository userRepository;
     private final RoadmapNodeRepository roadmapNodeRepository;
 
     @Transactional
-    public UserProgressResponseDTO updateProgress(UUID userId, UserProgressRequestDTO dto) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
+    public UserProgressResponseDTO updateProgress(User user, UserProgressRequestDTO dto) {
         var node = roadmapNodeRepository.findById(dto.nodeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Roadmap node not found"));
 
-        var progress = userProgressRepository.findByUserIdAndRoadmapNodeId(userId, dto.nodeId())
+        var progress = userProgressRepository.findByUserIdAndRoadmapNodeId(user.getId(), dto.nodeId())
                 .orElseGet(() -> UserProgress.builder()
                         .user(user)
                         .roadmapNode(node)

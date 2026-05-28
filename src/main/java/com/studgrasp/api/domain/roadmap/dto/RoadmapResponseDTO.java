@@ -1,5 +1,7 @@
 package com.studgrasp.api.domain.roadmap.dto;
 
+import com.studgrasp.api.domain.roadmapnode.dto.RoadmapNodeResponseDTO;
+
 import java.util.List;
 import java.util.UUID;
 

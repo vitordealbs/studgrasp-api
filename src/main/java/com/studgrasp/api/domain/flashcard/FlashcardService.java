@@ -1,22 +1,25 @@
 package com.studgrasp.api.domain.flashcard;
 
 import com.studgrasp.api.domain.flashcard.dto.*;
-import com.studgrasp.api.domain.user.UserRepository;
+import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FlashcardService {
 
+    private static final int REVIEW_INTERVAL_CORRECT_DAYS = 3;
+    private static final int REVIEW_INTERVAL_WRONG_DAYS = 1;
+
     private final FlashcardRepository flashcardRepository;
     private final FlashcardAttemptRepository flashcardAttemptRepository;
-    private final UserRepository userRepository;
 
     @Transactional
     public FlashcardResponseDTO createFlashcard(FlashcardRequestDTO dto) {
@@ -29,22 +32,17 @@ public class FlashcardService {
                 .build();
 
         var saved = flashcardRepository.save(flashcard);
-        return new FlashcardResponseDTO(
-                saved.getId(), saved.getNodeId(), saved.getQuestion(),
-                saved.getAnswer(), saved.getDifficulty(), saved.isAiGenerated(),
-                saved.getCreatedAt()
-        );
+        return toDTO(saved);
     }
 
     @Transactional
-    public FlashcardAttemptResponseDTO totalAttempt(UUID flashcardId, FlashcardAttemptRequestDTO dto) {
+    public FlashcardAttemptResponseDTO recordAttempt(UUID flashcardId, User user,
+                                                     FlashcardAttemptRequestDTO dto) {
         var flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found"));
 
-        var user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        var nextReview = dto.correct() ? LocalDateTime.now().plusDays(3) : LocalDateTime.now().plusDays(1);
+        int days = dto.correct() ? REVIEW_INTERVAL_CORRECT_DAYS : REVIEW_INTERVAL_WRONG_DAYS;
+        var nextReview = LocalDateTime.now().plusDays(days);
 
         var attempt = FlashcardAttempt.builder()
                 .user(user)
@@ -54,9 +52,30 @@ public class FlashcardService {
                 .build();
 
         var saved = flashcardAttemptRepository.save(attempt);
+        return toAttemptDTO(saved, user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<FlashcardAttemptResponseDTO> getDueFlashcards(User user) {
+        return flashcardAttemptRepository
+                .findDueForReview(user.getId(), LocalDateTime.now())
+                .stream()
+                .map(a -> toAttemptDTO(a, user.getId()))
+                .toList();
+    }
+
+    private FlashcardResponseDTO toDTO(Flashcard f) {
+        return new FlashcardResponseDTO(
+                f.getId(), f.getNodeId(), f.getQuestion(),
+                f.getAnswer(), f.getDifficulty(), f.isAiGenerated(),
+                f.getCreatedAt()
+        );
+    }
+
+    private FlashcardAttemptResponseDTO toAttemptDTO(FlashcardAttempt a, java.util.UUID userId) {
         return new FlashcardAttemptResponseDTO(
-                saved.getId(), user.getId(), flashcard.getId(),
-                saved.isCorrect(), saved.getAnsweredAt(), saved.getNextReviewAt()
+                a.getId(), userId, a.getFlashcard().getId(),
+                a.isCorrect(), a.getAnsweredAt(), a.getNextReviewAt()
         );
     }
 }

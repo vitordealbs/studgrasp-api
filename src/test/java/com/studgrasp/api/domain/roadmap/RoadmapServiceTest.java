@@ -1,12 +1,16 @@
 package com.studgrasp.api.domain.roadmap;
 
 import com.studgrasp.api.domain.roadmap.dto.RoadmapResponseDTO;
+import com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,14 +33,15 @@ class RoadmapServiceTest {
 
     @Test
     void shouldReturnAllRoadmaps() {
+        var pageable = PageRequest.of(0, 20);
         Roadmap roadmap = Roadmap.builder().id(UUID.randomUUID()).title("Java Dev").careerType("BACKEND").sourceUrl("http://test.com").build();
-        when(roadmapRepository.findAll()).thenReturn(List.of(roadmap));
+        when(roadmapRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(roadmap)));
 
-        List<RoadmapResponseDTO> response = roadmapService.getAllRoadmaps();
+        Page<RoadmapResponseDTO> response = roadmapService.getAllRoadmaps(pageable);
 
         assertNotNull(response);
-        assertEquals(1, response.size());
-        assertEquals("Java Dev", response.get(0).title());
+        assertEquals(1, response.getTotalElements());
+        assertEquals("Java Dev", response.getContent().get(0).title());
     }
 
     @Test
