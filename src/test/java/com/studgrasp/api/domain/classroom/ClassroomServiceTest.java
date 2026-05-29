@@ -77,11 +77,11 @@ class ClassroomServiceTest {
 
     @Test
     void shouldJoinClassroomByInviteCode() {
-        when(classroomRepository.findByInviteCode("ABC12345")).thenReturn(Optional.of(classroom));
+        when(classroomRepository.findByInviteCodeWithAdvisor("ABC12345")).thenReturn(Optional.of(classroom));
         when(classMemberRepository.existsByClassroomIdAndUserId(classroom.getId(), student.getId()))
                 .thenReturn(false);
         when(classMemberRepository.save(any(ClassMember.class))).thenAnswer(i -> i.getArgument(0));
-        when(classMemberRepository.findByClassroomId(classroom.getId())).thenReturn(List.of());
+        when(classMemberRepository.countByClassroomId(classroom.getId())).thenReturn(1L);
 
         ClassroomResponse response = classroomService.joinByInviteCode("ABC12345", student);
 
@@ -91,7 +91,7 @@ class ClassroomServiceTest {
 
     @Test
     void shouldThrowWhenInviteCodeNotFound() {
-        when(classroomRepository.findByInviteCode("invalid")).thenReturn(Optional.empty());
+        when(classroomRepository.findByInviteCodeWithAdvisor("invalid")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> classroomService.joinByInviteCode("invalid", student))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -100,7 +100,7 @@ class ClassroomServiceTest {
 
     @Test
     void shouldThrowWhenAlreadyMember() {
-        when(classroomRepository.findByInviteCode("ABC12345")).thenReturn(Optional.of(classroom));
+        when(classroomRepository.findByInviteCodeWithAdvisor("ABC12345")).thenReturn(Optional.of(classroom));
         when(classMemberRepository.existsByClassroomIdAndUserId(classroom.getId(), student.getId()))
                 .thenReturn(true);
 
@@ -129,10 +129,10 @@ class ClassroomServiceTest {
 
     @Test
     void shouldGetClassroomByIdForMember() {
-        when(classroomRepository.findById(classroom.getId())).thenReturn(Optional.of(classroom));
+        when(classroomRepository.findByIdWithAdvisor(classroom.getId())).thenReturn(Optional.of(classroom));
         when(classMemberRepository.existsByClassroomIdAndUserId(classroom.getId(), student.getId()))
                 .thenReturn(true);
-        when(classMemberRepository.findByClassroomId(classroom.getId())).thenReturn(List.of());
+        when(classMemberRepository.countByClassroomId(classroom.getId())).thenReturn(1L);
 
         ClassroomResponse response = classroomService.getById(classroom.getId(), student);
 
@@ -148,7 +148,7 @@ class ClassroomServiceTest {
                 .role(UserRole.STUDENT)
                 .build();
 
-        when(classroomRepository.findById(classroom.getId())).thenReturn(Optional.of(classroom));
+        when(classroomRepository.findByIdWithAdvisor(classroom.getId())).thenReturn(Optional.of(classroom));
         when(classMemberRepository.existsByClassroomIdAndUserId(classroom.getId(), stranger.getId()))
                 .thenReturn(false);
 
@@ -159,7 +159,7 @@ class ClassroomServiceTest {
     @Test
     void shouldThrowWhenClassroomNotFound() {
         UUID fakeId = UUID.randomUUID();
-        when(classroomRepository.findById(fakeId)).thenReturn(Optional.empty());
+        when(classroomRepository.findByIdWithAdvisor(fakeId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> classroomService.getById(fakeId, student))
                 .isInstanceOf(ResourceNotFoundException.class);
