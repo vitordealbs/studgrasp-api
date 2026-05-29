@@ -5,6 +5,8 @@ import com.studgrasp.api.domain.session.dto.StudySessionRequestDTO;
 import com.studgrasp.api.domain.session.dto.StudySessionResponseDTO;
 import com.studgrasp.api.domain.user.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,7 +29,11 @@ public class StudySessionController {
 
     private final StudySessionService studySessionService;
 
-    @Operation(summary = "Start a new study session")
+    @Operation(summary = "Start a new study session", description = "Opens a study session for the authenticated user associated with a specific roadmap node")
+    @ApiResponse(responseCode = "201", description = "Study session started successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error in request body")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "404", description = "Roadmap node not found")
     @PostMapping
     public ResponseEntity<StudySessionResponseDTO> startSession(
             @AuthenticationPrincipal User user,
@@ -36,12 +42,17 @@ public class StudySessionController {
                 .body(studySessionService.startSession(user, dto));
     }
 
-    @Operation(summary = "End an active study session")
+    @Operation(summary = "End an active study session", description = "Closes the specified session by recording the end timestamp, calculating the total duration")
+    @ApiResponse(responseCode = "200", description = "Session ended successfully")
+    @ApiResponse(responseCode = "400", description = "endedAt is missing or before session start time")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Session belongs to a different user")
+    @ApiResponse(responseCode = "404", description = "Session not found")
     @PatchMapping("/{sessionId}/end")
     public ResponseEntity<StudySessionResponseDTO> endSession(
-            @PathVariable UUID sessionId,
+            @Parameter(description = "UUID of the study session to end") @PathVariable UUID sessionId,
             @AuthenticationPrincipal User user,
-            @RequestParam @NotNull LocalDateTime endedAt) {
+            @Parameter(description = "Session end timestamp (ISO-8601, e.g. 2025-06-01T14:30:00)") @RequestParam @NotNull LocalDateTime endedAt) {
         return ResponseEntity.ok(studySessionService.endSession(sessionId, user, endedAt));
     }
 }
