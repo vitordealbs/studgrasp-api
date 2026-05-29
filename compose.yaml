@@ -1,5 +1,7 @@
 services:
   api:
+    networks:
+      - studgrasp_network
     build: .
     ports:
       - "8080:8080"
@@ -25,6 +27,8 @@ services:
       start_period: 40s
 
   postgres:
+    networks:
+      - studgrasp_network
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: studgrasp
@@ -41,6 +45,8 @@ services:
       retries: 5
 
   redis:
+    networks:
+      - studgrasp_network
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -51,6 +57,8 @@ services:
       retries: 5
 
   pgadmin:
+    networks:
+      - studgrasp_network
     image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@studgrasp.com
@@ -65,3 +73,6 @@ services:
 
 volumes:
   postgres_data:
+networks:
+  studgrasp_network:
+    name: studgrasp_network
