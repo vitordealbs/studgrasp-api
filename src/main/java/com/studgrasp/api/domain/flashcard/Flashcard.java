@@ -35,6 +35,9 @@ public class Flashcard {
     @Column(name = "ai_generated", nullable = false)
     private boolean aiGenerated;
 
+    @Column(name = "created_by")
+    private UUID createdBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
