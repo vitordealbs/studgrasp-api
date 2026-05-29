@@ -54,4 +54,7 @@ public class FlashcardAttempt {
     @Column(name = "repetitions", nullable = false)
     @Builder.Default
     private int repetitions = 0;
+
+    @Column(name = "quality")
+    private Integer quality;
 }
