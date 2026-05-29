@@ -1,0 +1,7 @@
+target/
+.git/
+.idea/
+*.iml
+.claude/
+get-docker.sh
+*.md
