@@ -50,11 +50,19 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/actuator/health").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/actuator/health",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/roadmaps/**", "/api/v1/roadmap-nodes/**")
-                                .hasAnyRole("ADVISOR", "SCRAPER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/roadmaps/**",
+                                "/api/v1/roadmap-nodes/**"
+                        ).hasAnyRole("ADVISOR", "SCRAPER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -62,7 +70,7 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, apiKeyAuthFilter.getClass())
                 .build();
     }
 
