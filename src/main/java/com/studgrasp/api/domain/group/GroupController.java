@@ -4,6 +4,8 @@ import com.studgrasp.api.config.OpenApiConfig;
 import com.studgrasp.api.domain.group.dto.*;
 import com.studgrasp.api.domain.user.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,7 +26,10 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    @Operation(summary = "Create a study group")
+    @Operation(summary = "Create a study group", description = "Creates a new study group that can be used for collaborative learning")
+    @ApiResponse(responseCode = "201", description = "Group created successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error in request body")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
     @PostMapping
     public ResponseEntity<GroupResponseDTO> create(
             @RequestBody @Valid GroupRequestDTO dto) {
@@ -32,10 +37,14 @@ public class GroupController {
                 .body(groupService.createGroup(dto));
     }
 
-    @Operation(summary = "Send a message to a group")
+    @Operation(summary = "Send a message to a group", description = "Posts a message from the authenticated user to the specified study group")
+    @ApiResponse(responseCode = "201", description = "Message sent successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error in request body")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "404", description = "Group not found")
     @PostMapping("/{groupId}/messages")
     public ResponseEntity<MessageResponseDTO> sendMessage(
-            @PathVariable UUID groupId,
+            @Parameter(description = "UUID of the study group") @PathVariable UUID groupId,
             @AuthenticationPrincipal User user,
             @RequestBody @Valid MessageRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
