@@ -41,7 +41,7 @@ class FlashcardServiceTest {
 
         when(flashcardRepository.save(any(Flashcard.class))).thenReturn(saved);
 
-        FlashcardResponseDTO response = flashcardService.createFlashcard(request);
+        FlashcardResponseDTO response = flashcardService.createFlashcard(request, null);
 
         assertNotNull(response);
         assertEquals(flashcardId, response.id());
