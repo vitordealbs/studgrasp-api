@@ -8,9 +8,12 @@ import java.util.List;
 
 @Getter
 @Builder
-public class AdvisorDashboardResponseDTO {
+public class ClassDashboardResponseDTO {
     private String classId;
-    private ClassStatsDTO classStats;
+    private String className;
+    private int totalStudents;
+    private Double avgRetentionRate;
+    private int totalReviewedToday;
     private List<WeakTopicDTO> weakTopics;
     private List<StudentStatsDTO> students;
     private List<String> insights;

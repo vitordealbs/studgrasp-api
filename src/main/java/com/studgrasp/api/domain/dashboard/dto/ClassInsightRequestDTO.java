@@ -14,5 +14,5 @@ public class ClassInsightRequestDTO {
     private Double avgRetentionRate;
     private int totalReviewedToday;
     private List<WeakTopicDTO> weakTopics;
-    private List<StudentSummaryDTO> students;
+    private List<StudentStatsDTO> students;
 }
