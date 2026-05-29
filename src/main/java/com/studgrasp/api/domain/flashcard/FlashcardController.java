@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +26,15 @@ public class FlashcardController {
 
     private final FlashcardService flashcardService;
 
-    @Operation(summary = "Create a flashcard linked to a roadmap node")
+    @Operation(summary = "Create a flashcard linked to a roadmap node (ADVISOR or SCRAPER)")
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADVISOR', 'SCRAPER')")
     public ResponseEntity<FlashcardResponseDTO> create(
-            @RequestBody @Valid FlashcardRequestDTO dto) {
+            @RequestBody @Valid FlashcardRequestDTO dto,
+            @AuthenticationPrincipal(errorOnInvalidType = false) User user) {
+        UUID createdBy = user != null ? user.getId() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(flashcardService.createFlashcard(dto));
+                .body(flashcardService.createFlashcard(dto, createdBy));
     }
 
     @Operation(summary = "Record a flashcard review attempt")

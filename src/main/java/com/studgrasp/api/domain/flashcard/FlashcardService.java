@@ -22,13 +22,14 @@ public class FlashcardService {
     private final FlashcardAttemptRepository flashcardAttemptRepository;
 
     @Transactional
-    public FlashcardResponseDTO createFlashcard(FlashcardRequestDTO dto) {
+    public FlashcardResponseDTO createFlashcard(FlashcardRequestDTO dto, UUID createdBy) {
         var flashcard = Flashcard.builder()
                 .nodeId(dto.nodeId())
                 .question(dto.question())
                 .answer(dto.answer())
                 .difficulty(dto.difficulty())
                 .aiGenerated(dto.aiGenerated())
+                .createdBy(createdBy)
                 .build();
 
         var saved = flashcardRepository.save(flashcard);
