@@ -4,6 +4,7 @@ import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.domain.user.UserRole;
 import com.studgrasp.api.infra.security.JwtService;
+import com.studgrasp.api.infra.security.TokenBlacklistService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +19,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,7 @@ class AuthServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private AuthenticationManager authenticationManager;
+    @Mock private TokenBlacklistService tokenBlacklistService;
 
     @InjectMocks
     private AuthService authService;
@@ -90,5 +94,26 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void logout_shouldDelegateToBlacklistService() {
+        String token = "header.payload.signature";
+        when(jwtService.getRemainingValidityMillis(token)).thenReturn(30_000L);
+
+        authService.logout(token);
+
+        verify(jwtService).getRemainingValidityMillis(token);
+        verify(tokenBlacklistService).blacklist(token, 30_000L);
+    }
+
+    @Test
+    void logout_shouldBlacklistWithZeroTtlWhenTokenAlreadyExpired() {
+        String token = "header.payload.expired";
+        when(jwtService.getRemainingValidityMillis(token)).thenReturn(0L);
+
+        authService.logout(token);
+
+        verify(tokenBlacklistService).blacklist(token, 0L);
     }
 }

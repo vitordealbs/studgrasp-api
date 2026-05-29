@@ -3,6 +3,7 @@ package com.studgrasp.api.config;
 import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.infra.security.ApiKeyAuthFilter;
 import com.studgrasp.api.infra.security.JwtAuthFilter;
+import com.studgrasp.api.infra.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,6 +41,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final ApiKeyAuthFilter apiKeyAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final UserRepository userRepository;
 
     @Value("${cors.allowed-origins}")
@@ -49,6 +52,23 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                        )
+                        .addHeaderWriter((request, response) -> {
+                            response.setHeader("Content-Security-Policy",
+                                    "default-src 'self'; " +
+                                    "script-src 'self' 'unsafe-inline'; " +
+                                    "style-src 'self' 'unsafe-inline'; " +
+                                    "img-src 'self' data:; " +
+                                    "frame-ancestors 'none'");
+                            response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/**",
@@ -70,6 +90,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, apiKeyAuthFilter.getClass())
                 .build();
