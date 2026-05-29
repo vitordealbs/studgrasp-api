@@ -85,42 +85,42 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
 
     @Query(value = """
             SELECT
-                u.id::text                      AS user_id,
-                u.name                          AS user_name,
-                COUNT(CASE WHEN DATE(fa.answered_at) = CURRENT_DATE THEN 1 END)
-                                                AS reviewed_today,
-                CASE WHEN COUNT(fa.id) FILTER (
-                          WHERE fa.answered_at >= NOW() - INTERVAL '30 days') > 0
-                     THEN COUNT(fa.id) FILTER (
-                              WHERE fa.answered_at >= NOW() - INTERVAL '30 days'
-                                AND fa.quality >= 3)::float
-                          / COUNT(fa.id) FILTER (
-                              WHERE fa.answered_at >= NOW() - INTERVAL '30 days')
-                     ELSE NULL
-                END                             AS retention_rate
+                u.id::text                                                                  AS user_id,
+                u.name                                                                      AS user_name,
+                COUNT(fa.id) FILTER (WHERE DATE(fa.answered_at) = CURRENT_DATE)            AS reviewed_today,
+                CASE
+                    WHEN COUNT(fa.id) FILTER (
+                         WHERE fa.answered_at >= NOW() - INTERVAL '30 days') > 0
+                    THEN COUNT(fa.id) FILTER (
+                             WHERE fa.correct = true
+                               AND fa.answered_at >= NOW() - INTERVAL '30 days')::float
+                         / COUNT(fa.id) FILTER (
+                             WHERE fa.answered_at >= NOW() - INTERVAL '30 days')
+                    ELSE NULL
+                END                                                                         AS retention_rate
             FROM class_members cm
-            JOIN users u ON cm.user_id = u.id
+            JOIN users u ON u.id = cm.user_id
             LEFT JOIN flashcard_attempts fa ON fa.user_id = u.id
             WHERE cm.class_id = :classId
             GROUP BY u.id, u.name
-            ORDER BY retention_rate DESC NULLS LAST
+            ORDER BY u.name
             """, nativeQuery = true)
     List<Object[]> findStudentStatsByClassId(@Param("classId") UUID classId);
 
     @Query(value = """
-            SELECT rn.id::text        AS nodeId,
-                   rn.title           AS nodeTitle,
-                   COUNT(fa.id)       AS totalAttempts,
-                   SUM(CASE WHEN fa.correct = false THEN 1 ELSE 0 END) AS wrongAttempts
-            FROM flashcard_attempts fa
-            JOIN flashcards f ON fa.flashcard_id = f.id
-            JOIN roadmap_nodes rn ON f.node_id = rn.id
-            WHERE fa.user_id IN (
-                SELECT cm.user_id FROM class_members cm WHERE cm.class_id = :classId
-            )
+            SELECT
+                rn.id::text                                                                 AS node_id,
+                rn.title                                                                    AS node_title,
+                COUNT(fa.id) FILTER (WHERE fa.correct = false)::float / COUNT(fa.id)       AS error_rate
+            FROM class_members cm
+            JOIN flashcard_attempts fa ON fa.user_id = cm.user_id
+            JOIN flashcards f           ON f.id = fa.flashcard_id
+            JOIN roadmap_nodes rn       ON rn.id = f.node_id
+            WHERE cm.class_id = :classId
             GROUP BY rn.id, rn.title
-            HAVING COUNT(fa.id) > 0
-            ORDER BY (SUM(CASE WHEN fa.correct = false THEN 1 ELSE 0 END)::float / COUNT(fa.id)) DESC
+            HAVING COUNT(fa.id) >= 5
+            ORDER BY error_rate DESC
+            LIMIT 5
             """, nativeQuery = true)
     List<Object[]> findWeakTopicsByClassId(@Param("classId") UUID classId);
 }

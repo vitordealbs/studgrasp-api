@@ -1,8 +1,10 @@
 package com.studgrasp.api.domain.dashboard;
 
+import com.studgrasp.api.domain.classroom.ClassroomRepository;
 import com.studgrasp.api.domain.dashboard.dto.*;
 import com.studgrasp.api.domain.flashcard.FlashcardAttemptRepository;
 import com.studgrasp.api.domain.flashcard.dto.WeakTopicDTO;
+import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,29 +15,34 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AdvisorDashboardService {
+public class ClassDashboardService {
 
-    private final FlashcardAttemptRepository repo;
+    private final FlashcardAttemptRepository attemptRepo;
+    private final ClassroomRepository classroomRepo;
     private final AiInsightsClient aiClient;
 
     @Transactional(readOnly = true)
-    public AdvisorDashboardResponseDTO getDashboard(UUID classId) {
-        List<StudentStatsDTO> students = repo.findStudentStatsByClassId(classId)
+    public ClassDashboardResponseDTO getDashboard(UUID classId) {
+        String className = classroomRepo.findById(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class", classId.toString()))
+                .getName();
+
+        List<StudentStatsDTO> students = attemptRepo.findStudentStatsByClassId(classId)
                 .stream()
-                .map(row -> StudentStatsDTO.builder()
-                        .userId(row[0].toString())
-                        .userName((String) row[1])
-                        .reviewedToday(row[2] != null ? ((Number) row[2]).intValue() : 0)
-                        .retentionRate(row[3] != null ? ((Number) row[3]).doubleValue() : null)
+                .map(r -> StudentStatsDTO.builder()
+                        .userId(r[0].toString())
+                        .userName((String) r[1])
+                        .reviewedToday(r[2] != null ? ((Number) r[2]).intValue() : 0)
+                        .retentionRate(r[3] != null ? ((Number) r[3]).doubleValue() : null)
                         .build())
                 .toList();
 
-        List<WeakTopicDTO> weakTopics = repo.findWeakTopicsByClassId(classId)
+        List<WeakTopicDTO> weakTopics = attemptRepo.findWeakTopicsByClassId(classId)
                 .stream()
-                .map(row -> new WeakTopicDTO(
-                        UUID.fromString(row[0].toString()),
-                        (String) row[1],
-                        ((Number) row[2]).doubleValue()))
+                .map(r -> new WeakTopicDTO(
+                        UUID.fromString(r[0].toString()),
+                        (String) r[1],
+                        ((Number) r[2]).doubleValue()))
                 .toList();
 
         int totalStudents = students.size();
@@ -45,12 +52,6 @@ public class AdvisorDashboardService {
                 .mapToDouble(StudentStatsDTO::getRetentionRate)
                 .average();
         Double avgRetentionRate = avg.isPresent() ? avg.getAsDouble() : null;
-
-        ClassStatsDTO classStats = ClassStatsDTO.builder()
-                .totalStudents(totalStudents)
-                .avgRetentionRate(avgRetentionRate)
-                .totalReviewedToday(totalReviewedToday)
-                .build();
 
         ClassInsightRequestDTO req = ClassInsightRequestDTO.builder()
                 .classId(classId.toString())
@@ -62,9 +63,12 @@ public class AdvisorDashboardService {
                 .build();
         List<String> insights = aiClient.fetchClassInsights(req).getInsights();
 
-        return AdvisorDashboardResponseDTO.builder()
+        return ClassDashboardResponseDTO.builder()
                 .classId(classId.toString())
-                .classStats(classStats)
+                .className(className)
+                .totalStudents(totalStudents)
+                .avgRetentionRate(avgRetentionRate)
+                .totalReviewedToday(totalReviewedToday)
                 .weakTopics(weakTopics)
                 .students(students)
                 .insights(insights)

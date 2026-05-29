@@ -33,8 +33,8 @@ class AdvisorDashboardServiceTest {
         return new Object[]{userId, name, reviewedToday, retention};
     }
 
-    private Object[] weakTopicRow(String nodeId, String title, long total, long wrong) {
-        return new Object[]{nodeId, title, total, wrong};
+    private Object[] weakTopicRow(String nodeId, String title, double errorRate) {
+        return new Object[]{nodeId, title, errorRate};
     }
 
     @Test
@@ -45,7 +45,7 @@ class AdvisorDashboardServiceTest {
                 studentRow(UUID.randomUUID().toString(), "Bruno", 5, 0.60)
         );
         List<Object[]> weakTopics = List.<Object[]>of(
-                weakTopicRow(UUID.randomUUID().toString(), "Ponteiros", 20L, 12L)
+                weakTopicRow(UUID.randomUUID().toString(), "Ponteiros", 0.6)
         );
 
         when(repo.findStudentStatsByClassId(classId)).thenReturn(students);
