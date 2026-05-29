@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/api/v1/roadmaps/**",
                                 "/api/v1/roadmap-nodes/**"
                         ).hasAnyRole("ADVISOR", "SCRAPER")
+                        .requestMatchers(HttpMethod.GET, "/api/dashboard/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

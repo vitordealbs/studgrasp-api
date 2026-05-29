@@ -44,6 +44,10 @@ jwt:
 scraper:
   api-key: ${SCRAPER_API_KEY:studgrasp-scraper-dev-key-change-in-production}
 
+ai:
+  api:
+    url: ${AI_API_URL:http://localhost:8000}
+
 logging:
   level:
     root: INFO

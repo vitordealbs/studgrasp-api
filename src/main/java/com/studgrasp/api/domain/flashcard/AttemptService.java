@@ -35,6 +35,7 @@ public class AttemptService {
 
         applySm2(attempt, dto.quality());
         attempt.setCorrect(dto.quality() >= 3);
+        attempt.setQuality(dto.quality());
         attempt.setAnsweredAt(LocalDateTime.now());
 
         return toDTO(attemptRepository.save(attempt));

@@ -95,6 +95,7 @@ CREATE TABLE flashcards (
     answer       TEXT        NOT NULL,
     difficulty   VARCHAR(10) NOT NULL DEFAULT 'MEDIUM',
     ai_generated BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_by   UUID        REFERENCES users(id),
     created_at   TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
@@ -135,6 +136,7 @@ CREATE TABLE flashcard_attempts (
     ease_factor    FLOAT     NOT NULL DEFAULT 2.5,
     interval_days  INT       NOT NULL DEFAULT 0,
     repetitions    INT       NOT NULL DEFAULT 0,
+    quality        INT,
     CONSTRAINT uq_flashcard_attempt UNIQUE (flashcard_id, user_id)
 );
 
