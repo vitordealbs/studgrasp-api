@@ -38,7 +38,7 @@ public class ClassroomService {
 
     @Transactional
     public ClassroomResponse joinByInviteCode(String inviteCode, User user) {
-        var classroom = classroomRepository.findByInviteCode(inviteCode)
+        var classroom = classroomRepository.findByInviteCodeWithAdvisor(inviteCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
 
         if (classMemberRepository.existsByClassroomIdAndUserId(classroom.getId(), user.getId())) {
@@ -52,7 +52,7 @@ public class ClassroomService {
 
         classMemberRepository.save(member);
 
-        int count = classMemberRepository.findByClassroomId(classroom.getId()).size();
+        int count = (int) classMemberRepository.countByClassroomId(classroom.getId());
         return toResponse(classroom, count);
     }
 
@@ -77,7 +77,7 @@ public class ClassroomService {
     }
 
     public ClassroomResponse getById(UUID id, User user) {
-        var classroom = classroomRepository.findById(id)
+        var classroom = classroomRepository.findByIdWithAdvisor(id)
                 .orElseThrow(() -> new ResourceNotFoundException("classroom", id.toString()));
 
         boolean isAdvisor = classroom.getAdvisor().getId().equals(user.getId());
@@ -87,7 +87,7 @@ public class ClassroomService {
             throw new AccessDeniedException("You don't have access to this class");
         }
 
-        int count = classMemberRepository.findByClassroomId(id).size();
+        int count = (int) classMemberRepository.countByClassroomId(id);
         return toResponse(classroom, count);
     }
 

@@ -15,6 +15,7 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
     List<FlashcardAttempt> findByUserId(UUID userId);
 
     @Query("SELECT fa FROM FlashcardAttempt fa " +
+           "JOIN FETCH fa.flashcard " +
            "WHERE fa.user.id = :userId AND fa.nextReviewAt <= :now " +
            "ORDER BY fa.nextReviewAt ASC")
     List<FlashcardAttempt> findDueForReview(@Param("userId") UUID userId,
