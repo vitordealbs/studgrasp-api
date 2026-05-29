@@ -66,7 +66,7 @@ public class RoadmapService {
                         node.getParentId(),
                         node.getNodeType(),
                         node.getNodeOrder(),
-                        node.getRoadmap().getId()
+                        roadmapId
                 )).toList();
     }
 

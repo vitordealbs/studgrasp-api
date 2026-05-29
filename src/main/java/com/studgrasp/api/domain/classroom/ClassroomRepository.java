@@ -18,9 +18,16 @@ public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
     boolean existsByInviteCode(String inviteCode);
 
     @Query("SELECT DISTINCT c FROM Classroom c " +
+           "JOIN FETCH c.advisor " +
            "LEFT JOIN ClassMember cm ON cm.classroom = c " +
            "WHERE c.advisor.id = :userId OR cm.user.id = :userId")
     List<Classroom> findAllAccessibleByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT c FROM Classroom c JOIN FETCH c.advisor WHERE c.id = :id")
+    Optional<Classroom> findByIdWithAdvisor(@Param("id") UUID id);
+
+    @Query("SELECT c FROM Classroom c JOIN FETCH c.advisor WHERE c.inviteCode = :inviteCode")
+    Optional<Classroom> findByInviteCodeWithAdvisor(@Param("inviteCode") String inviteCode);
 
     @Query("SELECT c FROM Classroom c ORDER BY c.createdAt DESC")
     Page<Classroom> findAllPaged(Pageable pageable);
