@@ -1,5 +1,7 @@
 package com.studgrasp.api.infra.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -37,14 +40,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex,
+                                                               HttpServletRequest request) {
+        String ip = getClientIp(request);
+        String path = request.getRequestURI();
+        log.warn("[SECURITY] event=FAILED_LOGIN ip={} path={}", ip, path);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "E-mail or Password invalid", null)
         );
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex,
+                                                                    HttpServletRequest request) {
+        String ip = getClientIp(request);
+        String path = request.getRequestURI();
+        String user = request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anonymous";
+        log.warn("[SECURITY] event=UNAUTHORIZED_ACCESS ip={} path={} user={}", ip, path, user);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                 new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access Denied", null)
         );
@@ -78,5 +90,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
                 new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, null)
         );
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

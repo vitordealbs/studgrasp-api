@@ -164,6 +164,54 @@ X-API-Key: <SCRAPER_API_KEY value>
 
 ---
 
+## 🔒 Security
+
+The API implements several layers of defence-in-depth:
+
+### A) IDOR Protection (Insecure Direct Object Reference)
+`GET /api/dashboard/{userId}`, `GET /api/attempts/due/{userId}`, and `GET /api/attempts/analysis/{userId}` all validate ownership before returning data.
+- **Owner access**: the requesting user's JWT subject must match the `userId` path parameter.
+- **Advisor access**: users with the `ADVISOR` role may query any user's data.
+- Any other combination results in HTTP **403 Forbidden**.
+
+### B) Security Audit Logging
+Structured security events are logged by the `[SECURITY]` prefix in the format:
+```
+[SECURITY] event=XXX ip=XXX path=XXX user=XXX
+```
+Events logged:
+- `FAILED_LOGIN` — bad credentials in `GlobalExceptionHandler`
+- `UNAUTHORIZED_ACCESS` — `AuthorizationDeniedException` in `GlobalExceptionHandler`
+- `INVALID_TOKEN` / `EXPIRED_OR_INVALID_TOKEN` — malformed or expired JWT in `JwtAuthFilter`
+- `BLACKLISTED_TOKEN_USED` — token used after logout in `JwtAuthFilter`
+- `RATE_LIMIT_EXCEEDED` — client exceeded request quota in `RateLimitFilter`
+
+### C) Rate Limiting (Redis fixed-window)
+`RateLimitFilter` enforces per-IP request quotas using Redis:
+- **Auth endpoints** (`/api/v1/auth/**`): **10 requests / minute**
+- **All other endpoints**: **200 requests / minute**
+- Exceeded limit → HTTP **429 Too Many Requests** with `Retry-After: 60` header.
+- **Fail-open**: if Redis is unavailable, traffic is never blocked.
+
+### D) Security Headers
+Every HTTP response includes:
+| Header | Value |
+|--------|-------|
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+
+### E) Logout & Token Blacklisting
+`POST /api/v1/auth/logout` (requires valid JWT):
+1. Extracts the remaining TTL of the current token via `JwtService.getRemainingValidityMillis()`.
+2. Stores the token signature (`token_bl:<signature>`) in Redis with that TTL.
+3. Every subsequent request through `JwtAuthFilter` checks the blacklist; a blacklisted token is silently dropped (SecurityContext stays empty → 401/403 for protected resources).
+4. **Fail-open**: if Redis is unavailable, blacklist checks return `false` so traffic is not interrupted.
+
+---
+
 ## 🔗 Related Repositories
 
 - [studgrasp-frontend](https://github.com/vitordealbs/studgrasp-frontend) — React + TypeScript UI

@@ -43,6 +43,16 @@ public class JwtService {
         }
     }
 
+    public long getRemainingValidityMillis(String token) {
+        try {
+            Date expiration = extractClaims(token).getExpiration();
+            long remaining = expiration.getTime() - System.currentTimeMillis();
+            return Math.max(remaining, 0);
+        } catch (io.jsonwebtoken.JwtException e) {
+            return 0;
+        }
+    }
+
     private boolean isTokenExpired(String token) {
         return extractClaims(token).getExpiration().before(new Date());
     }

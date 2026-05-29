@@ -4,6 +4,7 @@ import com.studgrasp.api.domain.user.User;
 import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.domain.user.UserRole;
 import com.studgrasp.api.infra.security.JwtService;
+import com.studgrasp.api.infra.security.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -56,5 +58,10 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole().name()
         );
+    }
+
+    public void logout(String token) {
+        long remainingMillis = jwtService.getRemainingValidityMillis(token);
+        tokenBlacklistService.blacklist(token, remainingMillis);
     }
 }
