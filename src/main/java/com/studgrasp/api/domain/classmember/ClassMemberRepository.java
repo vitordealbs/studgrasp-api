@@ -11,6 +11,7 @@ import java.util.UUID;
 @Repository
 public interface ClassMemberRepository extends JpaRepository<ClassMember, ClassMemberId> {
     List<ClassMember> findByClassroomId(UUID classroomId);
+    long countByClassroomId(UUID classroomId);
     List<ClassMember> findByUserId(UUID userId);
     boolean existsByClassroomIdAndUserId(UUID classroomId, UUID userId);
 
