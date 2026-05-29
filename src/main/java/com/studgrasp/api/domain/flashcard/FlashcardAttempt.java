@@ -3,13 +3,18 @@ package com.studgrasp.api.domain.flashcard;
 import com.studgrasp.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "flashcard_attempts")
+@Table(
+    name = "flashcard_attempts",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_flashcard_attempt",
+        columnNames = {"flashcard_id", "user_id"}
+    )
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,10 +37,21 @@ public class FlashcardAttempt {
     @Column(nullable = false)
     private boolean correct;
 
-    @CreationTimestamp
-    @Column(name = "answered_at", nullable = false, updatable = false)
+    @Column(name = "answered_at", nullable = false)
     private LocalDateTime answeredAt;
 
     @Column(name = "next_review_at", nullable = false)
     private LocalDateTime nextReviewAt;
+
+    @Column(name = "ease_factor", nullable = false)
+    @Builder.Default
+    private double easeFactor = 2.5;
+
+    @Column(name = "interval_days", nullable = false)
+    @Builder.Default
+    private int intervalDays = 0;
+
+    @Column(name = "repetitions", nullable = false)
+    @Builder.Default
+    private int repetitions = 0;
 }

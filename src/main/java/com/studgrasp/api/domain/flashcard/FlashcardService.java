@@ -48,6 +48,7 @@ public class FlashcardService {
                 .user(user)
                 .flashcard(flashcard)
                 .correct(dto.correct())
+                .answeredAt(LocalDateTime.now())
                 .nextReviewAt(nextReview)
                 .build();
 
