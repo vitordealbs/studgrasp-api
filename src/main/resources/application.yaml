@@ -6,6 +6,11 @@ spring:
     compose:
       enabled: false
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/studgrasp}
     username: ${DB_USER:studgrasp}
@@ -43,6 +48,10 @@ jwt:
 
 scraper:
   api-key: ${SCRAPER_API_KEY:studgrasp-scraper-dev-key-change-in-production}
+
+app:
+  avatar:
+    upload-dir: ${AVATAR_UPLOAD_DIR:./avatars}
 
 ai:
   api:

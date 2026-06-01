@@ -78,6 +78,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/*/avatar", "/api/v1/users/*/avatar/file").permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/v1/roadmaps/**",

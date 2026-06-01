@@ -1,6 +1,7 @@
 package com.studgrasp.api.domain.progress;
 
 import com.studgrasp.api.config.OpenApiConfig;
+import com.studgrasp.api.domain.progress.dto.RoadmapProgressSummaryDTO;
 import com.studgrasp.api.domain.progress.dto.UserProgressRequestDTO;
 import com.studgrasp.api.domain.progress.dto.UserProgressResponseDTO;
 import com.studgrasp.api.domain.user.User;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Tag(name = "Progress", description = "Track user progress on roadmap nodes")
 @SecurityRequirement(name = OpenApiConfig.BEARER_SCHEME)
@@ -33,5 +36,16 @@ public class UserProgressController {
             @AuthenticationPrincipal User user,
             @RequestBody @Valid UserProgressRequestDTO dto) {
         return ResponseEntity.ok(userProgressService.updateProgress(user, dto));
+    }
+
+    @Operation(summary = "Get roadmap progress summary", description = "Returns total and completed node counts for the given roadmap for the authenticated user.")
+    @ApiResponse(responseCode = "200", description = "Progress summary returned")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "404", description = "Roadmap not found")
+    @GetMapping("/roadmap/{roadmapId}")
+    public ResponseEntity<RoadmapProgressSummaryDTO> getRoadmapProgressSummary(
+            @PathVariable UUID roadmapId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userProgressService.getRoadmapProgressSummary(roadmapId, user));
     }
 }
