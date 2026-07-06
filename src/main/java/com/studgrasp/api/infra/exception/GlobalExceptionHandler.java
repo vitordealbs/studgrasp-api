@@ -63,6 +63,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        log.warn("Invalid JSON format: {}", ex.getMessage());
+        String message = "Invalid JSON format in request body";
+        if (ex.getMessage() != null && ex.getMessage().contains("Unrecognized character escape")) {
+            message = "Invalid JSON: Special characters in string values must not be escaped with backslash";
+        }
+        return ResponseEntity.badRequest().body(
+                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, null)
+        );
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex,
                                                                HttpServletRequest request) {
@@ -95,6 +108,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        log.error("Unhandled exception caught: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Server Intern Error", null)

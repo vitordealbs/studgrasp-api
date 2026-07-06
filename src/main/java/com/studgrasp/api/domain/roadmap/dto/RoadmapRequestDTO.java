@@ -12,5 +12,7 @@ public record RoadmapRequestDTO(
         @Size(max = 50)
         String careerType,
 
-        String sourceUrl
+        String sourceUrl,
+
+        boolean isPublic
 ) {}

@@ -28,16 +28,14 @@ public class FlashcardController {
 
     private final FlashcardService flashcardService;
 
-    @Operation(summary = "Create a flashcard linked to a roadmap node (ADVISOR or SCRAPER)", description = "Creates a new flashcard associated with a roadmap node. The createdBy field is derived from the authenticated user when available.")
+    @Operation(summary = "Create a flashcard linked to a roadmap node", description = "Creates a new flashcard associated with a roadmap node. Any authenticated user can create flashcards.")
     @ApiResponse(responseCode = "201", description = "Flashcard created successfully")
     @ApiResponse(responseCode = "400", description = "Validation error in request body")
     @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
-    @ApiResponse(responseCode = "403", description = "Requires ADVISOR or SCRAPER role")
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADVISOR', 'SCRAPER')")
     public ResponseEntity<FlashcardResponseDTO> create(
             @RequestBody @Valid FlashcardRequestDTO dto,
-            @AuthenticationPrincipal(errorOnInvalidType = false) User user) {
+            @AuthenticationPrincipal User user) {
         UUID createdBy = user != null ? user.getId() : null;
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(flashcardService.createFlashcard(dto, createdBy));
@@ -64,5 +62,26 @@ public class FlashcardController {
     public ResponseEntity<List<FlashcardAttemptResponseDTO>> getDue(
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(flashcardService.getDueFlashcards(user));
+    }
+
+    @Operation(summary = "Reset flashcard progress for a specific roadmap", description = "Deletes all flashcard attempts for the authenticated user for flashcards in a specific roadmap. This allows you to start learning the roadmap from scratch.")
+    @ApiResponse(responseCode = "204", description = "Progress reset successfully")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "404", description = "Roadmap not found")
+    @DeleteMapping("/progress/roadmap/{roadmapId}")
+    public ResponseEntity<Void> resetProgressForRoadmap(
+            @Parameter(description = "UUID of the roadmap to reset progress for") @PathVariable UUID roadmapId,
+            @AuthenticationPrincipal User user) {
+        flashcardService.resetProgressForRoadmap(roadmapId, user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reset all flashcard progress", description = "Deletes ALL flashcard attempts for the authenticated user across all roadmaps. Use with caution - this cannot be undone!")
+    @ApiResponse(responseCode = "204", description = "All progress reset successfully")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @DeleteMapping("/progress/all")
+    public ResponseEntity<Void> resetAllProgress(@AuthenticationPrincipal User user) {
+        flashcardService.resetAllProgress(user.getId());
+        return ResponseEntity.noContent().build();
     }
 }

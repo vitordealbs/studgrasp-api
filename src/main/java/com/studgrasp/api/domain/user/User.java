@@ -46,6 +46,9 @@ public class User implements UserDetails {
     @Column(name = "avatar_path")
     private String avatarPath;
 
+    @Column(name = "accepted_terms_at")
+    private LocalDateTime acceptedTermsAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

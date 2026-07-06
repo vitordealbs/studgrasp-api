@@ -2,6 +2,7 @@ package com.studgrasp.api.domain.flashcard;
 
 import com.studgrasp.api.domain.flashcard.dto.*;
 import com.studgrasp.api.domain.user.User;
+import com.studgrasp.api.domain.user.UserRepository;
 import com.studgrasp.api.infra.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,9 +21,27 @@ public class FlashcardService {
 
     private final FlashcardRepository flashcardRepository;
     private final FlashcardAttemptRepository flashcardAttemptRepository;
+    private final UserRepository userRepository;
+    private final com.studgrasp.api.domain.roadmapnode.RoadmapNodeRepository roadmapNodeRepository;
+    private final com.studgrasp.api.domain.roadmap.RoadmapService roadmapService;
 
     @Transactional
     public FlashcardResponseDTO createFlashcard(FlashcardRequestDTO dto, UUID createdBy) {
+        // Validate that the user can create flashcards for this node
+        if (createdBy != null && !dto.aiGenerated()) {
+            var node = roadmapNodeRepository.findById(dto.nodeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Node not found"));
+
+            var roadmapId = node.getRoadmap().getId();
+
+            // Only roadmap owner or coauthors can create flashcards
+            if (!roadmapService.canEditRoadmap(roadmapId, createdBy)) {
+                throw new IllegalArgumentException(
+                    "You can only create flashcards for roadmaps you own or are a coauthor of. " +
+                    "Clone the roadmap first to create your own flashcards.");
+            }
+        }
+
         var flashcard = Flashcard.builder()
                 .nodeId(dto.nodeId())
                 .question(dto.question())
@@ -33,6 +52,27 @@ public class FlashcardService {
                 .build();
 
         var saved = flashcardRepository.save(flashcard);
+
+        // If user-created (not AI-generated), create initial attempt for immediate review
+        if (!dto.aiGenerated() && createdBy != null) {
+            var user = userRepository.findById(createdBy)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            var initialAttempt = FlashcardAttempt.builder()
+                    .user(user)
+                    .flashcard(saved)
+                    .correct(false)
+                    .answeredAt(LocalDateTime.now())
+                    .nextReviewAt(LocalDateTime.now()) // Available immediately
+                    .repetitions(0)
+                    .easeFactor(2.5)
+                    .intervalDays(0)
+                    .quality(0)
+                    .build();
+
+            flashcardAttemptRepository.save(initialAttempt);
+        }
+
         return toDTO(saved);
     }
 
@@ -64,6 +104,16 @@ public class FlashcardService {
                 .stream()
                 .map(a -> toAttemptDTO(a, user.getId()))
                 .toList();
+    }
+
+    @Transactional
+    public void resetProgressForRoadmap(UUID roadmapId, UUID userId) {
+        flashcardAttemptRepository.deleteByUserIdAndRoadmapId(userId, roadmapId);
+    }
+
+    @Transactional
+    public void resetAllProgress(UUID userId) {
+        flashcardAttemptRepository.deleteByUserId(userId);
     }
 
     private FlashcardResponseDTO toDTO(Flashcard f) {

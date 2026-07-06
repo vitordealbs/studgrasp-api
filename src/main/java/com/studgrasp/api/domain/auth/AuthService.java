@@ -33,6 +33,7 @@ public class AuthService {
                 .role(request.role() != null && request.role().equalsIgnoreCase("ADVISOR")
                         ? UserRole.ADVISOR
                         : UserRole.STUDENT)
+                .acceptedTermsAt(java.time.LocalDateTime.now())
                 .build();
 
         userRepository.save(user);

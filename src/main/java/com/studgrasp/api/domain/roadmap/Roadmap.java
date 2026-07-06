@@ -38,6 +38,15 @@ public class Roadmap {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic = false;
+
+    @Column(name = "is_custom", nullable = false)
+    private boolean isCustom = false;
+
     @OneToMany(mappedBy = "roadmap", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoadmapNode> nodes = new ArrayList<>();
 }

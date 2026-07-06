@@ -1,7 +1,9 @@
 package com.studgrasp.api.domain.auth;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -21,5 +23,9 @@ public record RegisterRequest(
         )
         String password,
 
-        String role
+        String role,
+
+        @NotNull(message = "You must accept the Terms of Service and Privacy Policy")
+        @AssertTrue(message = "You must accept the Terms of Service and Privacy Policy")
+        Boolean termsAccepted
 ) {}
