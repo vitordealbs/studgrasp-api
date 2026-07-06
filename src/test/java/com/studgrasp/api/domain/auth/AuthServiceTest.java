@@ -37,7 +37,7 @@ class AuthServiceTest {
 
     @Test
     void shouldRegisterNewUser() {
-        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
+        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT", true);
 
         when(userRepository.existsByEmail("vitor@test.com")).thenReturn(false);
         when(passwordEncoder.encode("123456")).thenReturn("hashed");
@@ -54,7 +54,7 @@ class AuthServiceTest {
 
     @Test
     void shouldThrowWhenEmailAlreadyExists() {
-        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT");
+        var request = new RegisterRequest("Vitor", "vitor@test.com", "123456", "STUDENT", true);
 
         when(userRepository.existsByEmail("vitor@test.com")).thenReturn(true);
 

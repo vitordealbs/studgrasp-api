@@ -21,7 +21,10 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardResponseDTO getDashboard(UUID userId) {
-        Object[] raw = repo.findRawStatsByUserId(userId);
+        List<Object[]> results = repo.findRawStatsByUserId(userId);
+
+        // Query always returns one row with aggregate functions
+        Object[] raw = results.isEmpty() ? new Object[6] : results.get(0);
 
         int reviewedToday = raw[0] != null ? ((Number) raw[0]).intValue() : 0;
         int correctToday  = raw[1] != null ? ((Number) raw[1]).intValue() : 0;

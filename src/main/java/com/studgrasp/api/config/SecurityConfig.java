@@ -77,13 +77,21 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps", "/api/v1/roadmaps/career/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/*/avatar", "/api/v1/users/*/avatar/file").permitAll()
+                        // Custom roadmaps endpoints (authenticated users)
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/v1/roadmaps/**",
-                                "/api/v1/roadmap-nodes/**"
-                        ).hasAnyRole("ADVISOR", "SCRAPER")
+                                "/api/v1/roadmaps/custom",
+                                "/api/v1/roadmaps/*/save"
+                        ).authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/roadmaps/*/save").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/roadmaps/my", "/api/v1/roadmaps/workshop").authenticated()
+                        // Roadmap nodes endpoints (authenticated users - permission checked in service)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/roadmap-nodes").authenticated()
+                        // AI/Advisor roadmaps endpoints (restricted)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/roadmaps").hasAnyRole("ADVISOR", "SCRAPER")
                         .requestMatchers(HttpMethod.GET, "/api/dashboard/**").hasAnyRole("STUDENT", "ADVISOR")
                         .anyRequest().authenticated()
                 )

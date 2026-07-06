@@ -10,5 +10,9 @@ public record RoadmapResponseDTO(
         String title,
         String careerType,
         String sourceUrl,
-        List<RoadmapNodeResponseDTO> nodes
+        List<RoadmapNodeResponseDTO> nodes,
+        UUID createdBy,
+        boolean isPublic,
+        boolean isCustom,
+        boolean isSaved
 ) {}

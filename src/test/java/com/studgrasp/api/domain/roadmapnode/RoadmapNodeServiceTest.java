@@ -31,11 +31,20 @@ class RoadmapNodeServiceTest {
     @Mock
     private RoadmapRepository roadmapRepository;
 
+    @Mock
+    private com.studgrasp.api.domain.roadmap.RoadmapService roadmapService;
+
     @Test
     void shouldCreateNodeSuccessfully() {
         UUID roadmapId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         UUID nodeId = UUID.randomUUID();
-        Roadmap roadmap = Roadmap.builder().id(roadmapId).title("Backend").build();
+        Roadmap roadmap = Roadmap.builder()
+                .id(roadmapId)
+                .title("Backend")
+                .createdBy(userId)
+                .isCustom(true)
+                .build();
         RoadmapNodeRequestDTO request = new RoadmapNodeRequestDTO(
                 null, "Ponteiros", "Introdução a ponteiros", null, "TOPIC", 1, roadmapId);
 
@@ -44,9 +53,10 @@ class RoadmapNodeServiceTest {
                 .description("Introdução a ponteiros").nodeType("TOPIC").nodeOrder(1).build();
 
         when(roadmapRepository.findById(roadmapId)).thenReturn(Optional.of(roadmap));
+        when(roadmapService.canEditRoadmap(roadmapId, userId)).thenReturn(true);
         when(roadmapNodeRepository.save(any())).thenReturn(saved);
 
-        RoadmapNodeResponseDTO result = roadmapNodeService.create(request);
+        RoadmapNodeResponseDTO result = roadmapNodeService.create(request, userId);
 
         assertNotNull(result);
         assertEquals(nodeId, result.id());
@@ -58,13 +68,14 @@ class RoadmapNodeServiceTest {
     @Test
     void shouldThrowWhenRoadmapNotFound() {
         UUID roadmapId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         RoadmapNodeRequestDTO request = new RoadmapNodeRequestDTO(
                 null, "Node", null, null, "TOPIC", 0, roadmapId);
 
         when(roadmapRepository.findById(roadmapId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> roadmapNodeService.create(request));
+                () -> roadmapNodeService.create(request, userId));
         verify(roadmapNodeRepository, never()).save(any());
     }
 }

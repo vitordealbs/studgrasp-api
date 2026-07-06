@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,7 @@ class DashboardServiceTest {
         UUID userId = UUID.randomUUID();
         Object[] raw = rawStats(5, 3, 2, null, 10, 0.75);
 
-        when(repo.findRawStatsByUserId(userId)).thenReturn(raw);
+        when(repo.findRawStatsByUserId(userId)).thenReturn(Collections.singletonList(raw));
         when(repo.findActivityDatesByUserId(userId)).thenReturn(List.of(Date.valueOf(LocalDate.now())));
         when(repo.findWeakTopicsByUserId(userId)).thenReturn(Collections.emptyList());
         when(aiClient.fetchInsights(any())).thenReturn(new InsightResponseDTO(userId.toString(), List.of("Keep it up!")));
@@ -68,7 +69,7 @@ class DashboardServiceTest {
                 Date.valueOf(LocalDate.now().minusDays(2))
         );
 
-        when(repo.findRawStatsByUserId(userId)).thenReturn(raw);
+        when(repo.findRawStatsByUserId(userId)).thenReturn(Collections.singletonList(raw));
         when(repo.findActivityDatesByUserId(userId)).thenReturn(dates);
         when(repo.findWeakTopicsByUserId(userId)).thenReturn(Collections.emptyList());
         when(aiClient.fetchInsights(any())).thenReturn(new InsightResponseDTO(userId.toString(), Collections.emptyList()));
@@ -84,7 +85,7 @@ class DashboardServiceTest {
         Object[] raw = rawStats(0, 0, 0, null, 0, null);
         List<Date> oldDates = List.of(Date.valueOf(LocalDate.now().minusDays(5)));
 
-        when(repo.findRawStatsByUserId(userId)).thenReturn(raw);
+        when(repo.findRawStatsByUserId(userId)).thenReturn(Collections.singletonList(raw));
         when(repo.findActivityDatesByUserId(userId)).thenReturn(oldDates);
         when(repo.findWeakTopicsByUserId(userId)).thenReturn(Collections.emptyList());
         when(aiClient.fetchInsights(any())).thenReturn(new InsightResponseDTO(userId.toString(), Collections.emptyList()));
@@ -99,7 +100,7 @@ class DashboardServiceTest {
         UUID userId = UUID.randomUUID();
         Object[] raw = rawStats(0, 0, 0, null, 0, null);
 
-        when(repo.findRawStatsByUserId(userId)).thenReturn(raw);
+        when(repo.findRawStatsByUserId(userId)).thenReturn(Collections.singletonList(raw));
         when(repo.findActivityDatesByUserId(userId)).thenReturn(Collections.emptyList());
         when(repo.findWeakTopicsByUserId(userId)).thenReturn(Collections.emptyList());
         when(aiClient.fetchInsights(any())).thenReturn(new InsightResponseDTO(userId.toString(), Collections.emptyList()));
@@ -114,7 +115,7 @@ class DashboardServiceTest {
         UUID userId = UUID.randomUUID();
         Object[] raw = rawStats(0, 0, 0, null, 0, null);
 
-        when(repo.findRawStatsByUserId(userId)).thenReturn(raw);
+        when(repo.findRawStatsByUserId(userId)).thenReturn(Collections.singletonList(raw));
         when(repo.findActivityDatesByUserId(userId)).thenReturn(Collections.emptyList());
         when(repo.findWeakTopicsByUserId(userId)).thenReturn(Collections.emptyList());
         when(aiClient.fetchInsights(any())).thenReturn(new InsightResponseDTO(userId.toString(), Collections.emptyList()));

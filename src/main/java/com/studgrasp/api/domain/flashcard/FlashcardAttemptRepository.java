@@ -1,6 +1,7 @@
 package com.studgrasp.api.domain.flashcard;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -49,7 +50,7 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
                 COUNT(CASE WHEN DATE(fa.answered_at) = CURRENT_DATE THEN 1 END)
                     AS reviewed_today,
                 COUNT(CASE WHEN DATE(fa.answered_at) = CURRENT_DATE
-                                AND fa.quality >= 3 THEN 1 END)
+                                AND fa.correct = true THEN 1 END)
                     AS correct_today,
                 COUNT(DISTINCT CASE WHEN fa.next_review_at <= NOW()
                                     THEN fa.flashcard_id END)
@@ -64,7 +65,7 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
                           WHERE fa.answered_at >= NOW() - INTERVAL '30 days') > 0
                      THEN COUNT(*) FILTER (
                               WHERE fa.answered_at >= NOW() - INTERVAL '30 days'
-                                AND fa.quality >= 3)::float
+                                AND fa.correct = true)::float
                           / COUNT(*) FILTER (
                               WHERE fa.answered_at >= NOW() - INTERVAL '30 days')
                      ELSE NULL
@@ -72,7 +73,7 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
             FROM flashcard_attempts fa
             WHERE fa.user_id = :userId
             """, nativeQuery = true)
-    Object[] findRawStatsByUserId(@Param("userId") UUID userId);
+    List<Object[]> findRawStatsByUserId(@Param("userId") UUID userId);
 
     @Query(value = """
             SELECT DISTINCT DATE(fa.answered_at) AS activity_date
@@ -123,4 +124,20 @@ public interface FlashcardAttemptRepository extends JpaRepository<FlashcardAttem
             LIMIT 5
             """, nativeQuery = true)
     List<Object[]> findWeakTopicsByClassId(@Param("classId") UUID classId);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM flashcard_attempts fa
+            WHERE fa.user_id = :userId
+              AND fa.flashcard_id IN (
+                  SELECT f.id FROM flashcards f
+                  JOIN roadmap_nodes rn ON f.node_id = rn.id
+                  WHERE rn.roadmap_id = :roadmapId
+              )
+            """, nativeQuery = true)
+    void deleteByUserIdAndRoadmapId(@Param("userId") UUID userId, @Param("roadmapId") UUID roadmapId);
+
+    @Modifying
+    @Query("DELETE FROM FlashcardAttempt fa WHERE fa.user.id = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
 }
